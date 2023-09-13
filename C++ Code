@@ -1,0 +1,110 @@
+
+
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
+class Room {
+public:
+    int roomNumber;
+    int capacity;
+    double pricePerNight;
+    bool isOccupied;
+
+    Room(int number, int capacity, double pricePerNight, bool occupied = false)
+        : roomNumber(number), capacity(capacity), pricePerNight(pricePerNight), isOccupied(occupied) {}
+
+    void displayRoomInfo() const {
+        cout << "Room Number: " << roomNumber << endl;
+        cout << "Capacity: " << capacity << endl;
+        cout << "Price per Night: $" << pricePerNight << endl;
+        cout << "Occupied: " << (isOccupied ? "Yes" : "No") << endl;
+        cout << "-----------------------" << endl;
+    }
+};
+
+class Hotel {
+public:
+    void addRoom(Room* room);
+    void checkIn(int roomNumber);
+    void checkOut(int roomNumber);
+    void displayRooms() const;
+
+    void writeRoomsToFile() const;
+    void readRoomsFromFile();
+
+private:
+    Room* rooms[100] = {nullptr};
+};
+
+void Hotel::addRoom(Room* room) {
+    for (int i = 0; i < 100; i++) {
+        if (rooms[i] == nullptr) {
+            rooms[i] = room;
+            writeRoomsToFile();
+            return;
+        }
+    }
+    cout << "Cannot add more rooms. The hotel is at full capacity." << endl;
+}
+
+void Hotel::checkIn(int roomNumber) {
+    for (int i = 0; i < 100; i++) {
+        if (rooms[i] != nullptr && rooms[i]->roomNumber == roomNumber && !rooms[i]->isOccupied) {
+            rooms[i]->isOccupied = true;
+            cout << "Guest has checked into room " << roomNumber << "." << endl;
+            writeRoomsToFile();
+            return;
+        }
+    }
+    cout << "Room " << roomNumber << " not found or is already occupied." << endl;
+}
+
+vod Hotel::checkOut(int roomNumber) {
+    for (int i = 0; i < 100; i++) {
+        if (rooms[i] != nullptr && rooms[i]->roomNumber == roomNumber && rooms[i]->isOccupied) {
+            rooms[i]->isOccupied = false;
+            cout << "Guest has checked out from room " << roomNumber << "." << endl;
+            writeRoomsToFile();
+            return;
+        }
+    }
+    cout << "Room " << roomNumber << " not found or is not occupied." << endl;
+}
+
+void Hotel::displayRooms() const {
+    for (int i = 0; i < 100; i++) {
+        if (rooms[i] != nullptr) {
+            rooms[i]->displayRoomInfo();
+        }
+    }
+}
+
+void Hotel::writeRoomsToFile() const {
+    ofstream file("rooms.txt", ios::binary);
+    if (file.is_open()) {
+        for (int i = 0; i < 100; i++) {
+            if (rooms[i] != nullptr) {
+                file.write(reinterpret_cast<const char*>(rooms[i]), sizeof(Room));
+            }
+        }
+        file.close();
+    } else {
+        cerr << "Error: Unable to open room data file for writing." << endl;
+    }
+}
+
+void Hotel::readRoomsFromFile() {
+    ifstream file("rooms.txt", ios::binary);
+    if (file.is_open()) {
+        for (int i = 0; i < 100; i++) {
+            if (file.read(reinterpret_cast<char*>(rooms[i]), sizeof(Room)).gcount() != sizeof(Room)) {
+                break;
+            }
+        }
+        file.close();
+    } else {
+        cerr << "Error: Unable to open room data file for reading." << endl;
+    }
+}
